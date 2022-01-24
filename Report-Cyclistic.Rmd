@@ -1,0 +1,236 @@
+---
+title: "Cyclistic Bike-Share - Case Study"
+author: "Joseph Biel"
+date: "1/19/2022"
+output: html_document
+---
+
+## Case Study Environment
+
+The fictional company Cyclistics is looking to move into a new stage of growth. Brand awareness has met a point where the marketing need to move away from introduction, into creating more annual members. Cyclistics views their users in two bins: 'members' who pay an annual subscription. 'Casual' riders use either day passes or ride passes. Cyclistic's finance analysts have concluded annual members are more profitable that casual riders. 
+
+Cyclistics goal now is to use digital marketing to convert casual riders into annual members. The marketing team has 3 questions they want answered: How do annual and casual riders use Cyclistic bikes differently? Why would casual riders buy Cyclistic annual membership? How can Cyclistic use digital media to influence casual riders to become members?
+
+For this case study, I am going to be given the first question to awnser.
+
+*The data used in this case study is from a real world company. Their pricing plans will be assumed for this analyst.*
+
+### Ask 
+
+How do casual riders use Cyclistic bikes differently than annual members?
+
+How can those differences help the Marketing team reach casual riders in digital formats?
+
+Find the differences in casual riders, that will help Cyclistic reach those riders with digital media.
+
+### Prepare
+
+**1. Credibility of the Data**
+
+* The data being used in this case study is from the real world Company Divvy based in Chicago.
+* It is public data. 
+* I will be using the last 12 months of data. 
+* There are some missing data points in the names or the docking station, however, geo-locations, dates and times are mostly free of errors.
+
+**2. Sorting and Filtering the Data**
+
+* I will be using the most recent 12 month span of data.
+
+* I will be keeping each month separate, how even keeping in mind the seasonal trends that happen in Chicago. 
+
+* I will further clean the data in excel before moving it into RStudio for this report. 
+
+### Process
+
+1. Clean the data
+* Added a column to Excel to calculate the ride_length in time.
+**I made some assumptions to cleaning the data from this formula. If my manager was real this would have been discussed further. However, in trying to reach my goals of analysis these were made:**
+
+  * The source company for this data has limits to ride times.
+  
+     * Casual riders
+        * Ride pass can ride for 30 minutes 
+        * Day pass can ride for 3 hours, unlimited time in 1 day
+      
+      * Annual Member
+        * Ride 45 minutes at a time, unlimited. 
+      
+      * *All riders must re-dock their bikes and take another bike out. $.15 a minute usage fee for going over time limits. If a bike is not returned within 24 hours, the user can be charged for the cost of the bike.*
+  
+  * Removed all entries that were over 6 hours. Any time over that are large usage fees and the user did not use the service as intended.
+    
+  * Removed any ride lengths that we 0 minutes. Another clear entry that the user did not successfully use the service as intended.
+    
+    * Some of the ride_lengths were coming up as negative time being check out, those entries were also removed.
+
+* I added a day_of_week column to show which day the bike was initially checked out. 
+
+* Removed the ride_id and longitude, latitude after analysis - it was not used for any analysis - and I needed to limit my RAM usage on Rstudio
+  
+2. I used RStudio to create seasonal data frames. First installed required packages 
+```{r loading packages, message=FALSE, warning=FALSE, paged.print=FALSE}
+library(tidyverse)
+library(dplyr)
+library(ggplot2)
+library(knitr)
+
+
+```
+Loaded each month of the clean csv files
+```{r Loaded the cleaned csv files, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+x2021_Jan <- read_csv("2021_Jan.csv")
+x2021_Feb <- read_csv("2021_Feb.csv")
+x2021_Mar <- read_csv("2021_Mar.csv")
+x2021_Apr <- read_csv("2021_Apr.csv")
+x2021_May <- read_csv("2021_May.csv")
+x2021_Jun <- read_csv("2021_Jun.csv")
+x2021_Jul <- read_csv("2021_July.csv")
+x2021_Aug <- read_csv("2021_Aug.csv")
+x2021_Sep <- read_csv("2021_Sep.csv")
+x2021_Oct <- read_csv("2021_Oct.csv")
+x2021_Nov <- read_csv("2021_Nov.csv")
+x2021_Dec <- read_csv("2021_Dec.csv")
+
+```
+
+
+Then I used the clean csv files to create seasonal data frames and an all 2021
+
+```{r Created Seasonal data frames, echo=TRUE, message=FALSE, warning=FALSE, paged.print=FALSE}
+x2021_Summer <- bind_rows(x2021_Jun,x2021_Jul,x2021_Aug)
+x2021_Spring <- bind_rows(x2021_Mar,x2021_Apr,x2021_May)
+x2021_Fall <- bind_rows(x2021_Sep,x2021_Oct,x2021_Nov)
+x2021_Winter <- bind_rows(x2021_Dec,x2021_Jan,x2021_Feb)
+
+x2021_All <- bind_rows(x2021_Jan,x2021_Feb,x2021_Mar,x2021_Apr,x2021_May,x2021_Jun,x2021_Jul,x2021_Aug,x2021_Sep,x2021_Oct,x2021_Nov,x2021_Dec)
+
+```
+
+
+
+### Analyze
+
+#### 1. Seasonal differences
+
+* Member Riders are much more consistent in the riding habits by volume of rides. This validates the marketing teams assumption that members are more likely to use Cyclistic for commutes.
+* Casual Riders use Cyclistic more in the Spring and Summer. Suggesting that the use is not a necessity but as a leisure activity. Also, Ride duration increases in warmer months.
+
+```{R message=FALSE, warning=FALSE}
+ggplot(data=x2021_Spring)+
+  geom_bar(mapping=aes(member_casual),fill=" dark green") +
+  labs(title="Spring Riders", subtitle= "Amount of Casual Riders Vs Members During Summer Months")
+
+ggplot(data=x2021_Summer)+
+  geom_bar(mapping=aes(member_casual),fill=" gold") +
+  labs(title="Summer Riders", subtitle= "Amount of Casual Riders Vs Members During Summer Months")
+
+ggplot(data=x2021_Fall)+
+  geom_bar(mapping=aes(member_casual),fill=" dark orange") +
+  labs(title="Fall Riders", subtitle= "Amount of Casual Riders Vs Members During Summer Months")
+
+ggplot(data=x2021_Winter)+
+  geom_bar(mapping=aes(member_casual),fill=" blue") +
+  labs(title="Winter Riders", subtitle= "Amount of Casual Riders Vs Members During Summer Months")
+
+```
+
+#### 2. Daily Uses
+
+* Member Riders most popular days are spread throughout the week. No one day consistently sticks out, month after month. Again, suggesting use as a commute vehicle
+* Casual Riders most popular days are the weekend all year, every season.
+```{r Histograms showing the differences in Summer and Winter users, message=FALSE, warning=FALSE}
+ggplot(x2021_Summer, aes(x = day_of_week,fill=member_casual))+
+  geom_histogram(binwidth = .5)+
+  facet_wrap(~member_casual)+
+  labs(title= "Popular Day - Summer", subtitle= "Comparison of casual and member riders most popular days")
+
+ggplot(x2021_Winter, aes(x = day_of_week,fill=member_casual))+
+  geom_histogram(binwidth = .5)+
+  facet_wrap(~member_casual)+
+  labs(title= "Popular Day - Winter", subtitle= "Comparison of casual and member riders most popular days")
+
+ggplot(x2021_All, aes(x = day_of_week,fill=member_casual))+
+  geom_histogram(binwidth = .5)+
+  facet_wrap(~member_casual)+
+  labs(title= "Popular Day - 2021", subtitle= "Comparison of casual and member riders most popular days")
+
+```
+
+
+#### 3. Ride Duration
+* Member Riders again are consistent in their usage.
+  *August's drop in ride times seems against the trend. Further analysis may be required.
+* Casual riders have longer rides in the summer months.
+  *Longest ride time in August, with average ride times over 25 Minutes.
+*Regardless of month or season, casual riders get more time per ride than members.
+
+```{r Loaded a new spread sheet comparing just average ride duration and created comparison plot, message=FALSE, warning=FALSE}
+
+duration_avg<- read_csv("Duration_Avg - Sheet1.csv")
+```
+```{r fig.width=12}
+ggplot(duration_avg, aes(x=Month, y = ride_length ,color=member_casual,group = member_casual))+
+  geom_line(size =2)+
+  scale_x_discrete(limits = c("January","February","March","April","May","June","July","August","September","October","November","December"))+
+  labs(title = "Casual Riders Duration", subtitle = " A Yearly look at casual riders trip duration compared to member riders" )+
+  annotate("text", x="October", y= 1508, label="Year peak is in August at 25:08")
+```
+
+#### 4. Starting Times
+```{r creating a dataframe that can create starting time plot, message=FALSE, warning=FALSE}
+X2021_All1 <- separate(x2021_All, started_at, into=c('date','time'), sep=" ")
+x2021_All2 <- X2021_All1[order(X2021_All1$time),]
+
+ x2021_All3 <- separate(x2021_All2, time, into=c('hour','minute'),sep = ":")
+ x2021_All3$hour_of_day <- strtoi(x2021_All3$hour)
+ x2021_All3 <- x2021_All3[order(x2021_All3$hour_of_day),]
+
+```
+* The shape of the graph for starting times is very similar between casual and member riders. The biggest difference is the 7am and 8 am peak you can see in member riders. 
+* The valley in the member graph, between 9am and 5 pm, again supports the idea member riders use the service mostly for commute.
+* Casual riders continue into the later hours more than the members
+
+```{r Here is a plot showing the likeness of starting times for both casual and member riders, message=FALSE, warning=FALSE}
+
+
+ggplot(x2021_All3, aes(x = hour_of_day,fill=member_casual))+
+    geom_histogram(binwidth = 1)+
+    facet_wrap(~member_casual)+
+    labs(title= "Popular Starting Times", subtitle= "Comparison of casual and member riders most popular starting times")
+    
+```
+
+* The combined plot mirrors how simular the starting time activity is between the two groups
+
+```{r Here is a look at the combined data. Mirroring the seperated plot, message=FALSE, warning=FALSE}
+ggplot(data=x2021_All3)+
+  geom_bar(mapping=aes(hour_of_day))+
+  labs(title = "Most Popular Starting times")+
+  annotate("text", x = 11, y = 500000, label = "5pm has the most Starting at times")
+```
+
+#### 5. User errors
+```{r Here is a excerpt from the overview table that shows casual riders, message=TRUE, warning=TRUE}
+overview <- read_csv("Cyclist Combo clean.csv")
+error_table <- overview %>% select(c(Month,uncleaned_diff,casual_error,casual_error_per,casual_per))
+View(error_table)
+```
+* In the data that I cleaned early on, of users that did not use the service appropriately. with 0 minute rides or rides that would induce large usage charges. Casual riders made up a larger portion of that data then their contribution to total rides. The directions for first time users may not be clear. 
+
+### Share
+
+#### How do casual riders use Cyclistic bikes differently than annual members?
+
+* *Leisure vs Commute*
+  * *Casual* riders use the service more for leisure: taking *longer* timed rides, *later* in the day, with a concentration of ride on the *weekend*. 
+  * *Member* riders are consistent users that use the service for commuting: Shorter rides, throughout the week, with usage spikes before 9am and after 5pm.
+  
+* *Learning Curve*
+  * *Casual* riders have a higher percentage of rides over time limit and failed attempted rides, then the percentage of rides they have taken, compared to member riders. If a potential rider fails to use our service on their first ride, turning them into member riders will be impossible. 
+  
+**The message for the digital marketing team, should be promoting multiple leisurely rides, all year long. Also the simple plan payment and usage plan that comes with being a member.**
+
+
+
+
